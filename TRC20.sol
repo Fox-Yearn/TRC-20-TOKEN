@@ -43,8 +43,7 @@ library SafeMath {
 //**************************************************************************//  
 
 
-contract TRC20Token {TJPX2ftxheof24BeaNK7rmxPhr8Fk15jnu
-
+contract TRC20Token {
     using SafeMath for uint256;
 
     mapping (address => uint256) private _balances;
