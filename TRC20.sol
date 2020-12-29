@@ -43,7 +43,7 @@ library SafeMath {
 //**************************************************************************//  
 
 
-contract TRC20Token {
+contract TRC20Token {TJPX2ftxheof24BeaNK7rmxPhr8Fk15jnu
 
     using SafeMath for uint256;
 
