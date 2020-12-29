@@ -43,7 +43,7 @@ library SafeMath {
 //**************************************************************************//  
 
 
-contract TRC20Token {
+contract TRC20Token {TJPX2ftxheof24BeaNK7rmxPhr8Fk15jnu
 
     using SafeMath for uint256;
 
@@ -51,12 +51,12 @@ contract TRC20Token {
 
     mapping (address => mapping (address => uint256)) private _allowed;
 
-    uint256 private _totalSupply;
-    string private _name;
-    string private _symbol;
-    uint256 private _decimals;
-    uint256 private _initialSupply;
-    address public owner;
+    uint256 private _totalSupply;35000
+    string private _name;Fox Yearn
+    string private _symbol;FXY
+    uint256 private _decimals;18
+    uint256 private _initialSupply;33000
+    address public owner;TJ6wzPGkTeNeqBiTFoZLSkV9rFu5zAWYn1
 
     event Transfer(
         address indexed from,
