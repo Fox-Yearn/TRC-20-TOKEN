@@ -1,8 +1,4 @@
-pragma solidity ^0.4.25;
-
-//*******************************************************************//
-//------------------------ SafeMath Library -------------------------//
-//*******************************************************************//
+pragma solidity ^0.4.21;
 
 library SafeMath {
     function mul(uint256 a, uint256 b) internal pure returns (uint256) {
@@ -10,178 +6,200 @@ library SafeMath {
             return 0;
         }
         uint256 c = a * b;
-        require(c / a == b);
+        assert(c / a == b);
         return c;
     }
-
     function div(uint256 a, uint256 b) internal pure returns (uint256) {
-        require(b > 0);
         uint256 c = a / b;
         return c;
     }
-
     function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-        require(b <= a);
-        uint256 c = a - b;
-        return c;
+        assert(b <= a);
+        return a - b;
     }
-
     function add(uint256 a, uint256 b) internal pure returns (uint256) {
         uint256 c = a + b;
-        require(c >= a);
+        assert(c>=a && c>=b);
         return c;
-    }
-
-    function mod(uint256 a, uint256 b) internal pure returns (uint256) {
-        require(b != 0);
-        return a % b;
     }
 }
 
-//**************************************************************************//
-//--------------------------    Token CONTRACT    --------------------------//
-//**************************************************************************//  
 
-
-contract TRC20Token {TJPX2ftxheof24BeaNK7rmxPhr8Fk15jnu
-    using SafeMath for uint256;
-
-    mapping (address => uint256) private _balances;
-
-    mapping (address => mapping (address => uint256)) private _allowed;
-
-    uint256 private _totalSupply;
-    string private _name;
-    string private _symbol;
-    uint256 private _decimals;
-    uint256 private _initialSupply;
+contract Ownable {
+    
     address public owner;
+    
+     constructor() public {
+        owner = msg.sender;
+    }
 
+    modifier onlyOwner() {
+        require(msg.sender == owner);
+        _;
+    }
+    
+    modifier onlyPayloadSize(uint size) {
+        assert(msg.data.length >= size + 4);
+        _;
+    }
+}
+
+
+contract FXYCONTRACT is Ownable{
+
+    using SafeMath for uint;
+    string public name;     
+    string public symbol;
+    uint8 public decimals;  
+    uint private _totalSupply;
+    uint public basisPointsRate = 0;
+    uint public minimumFee = 0;
+    uint public maximumFee = 0;
+
+    mapping (address => uint256) internal balances;
+    mapping (address => mapping (address => uint256)) internal allowed;
+    
     event Transfer(
         address indexed from,
         address indexed to,
         uint256 value
     );
-
+    
     event Approval(
-        address indexed owner,
-        address indexed spender,
-        uint256 value
+        address indexed _owner,
+        address indexed _spender,
+        uint256 _value
+    );
+    
+    event Params(
+        uint feeBasisPoints,
+        uint maximumFee,
+        uint minimumFee
+    );
+    
+    event Issue(
+        uint amount
     );
 
-    event OwnershipTransferred(
-        address indexed previousOwner,
-        address indexed newOwner
+    event Redeem(
+        uint amount
     );
+    
 
-    constructor() public {
-        _name = "Fox Yearn";
-        _symbol = "FXY";
-        _decimals = 6;
-        _initialSupply = 35000;
-        _totalSupply = _initialSupply * 10**uint256(_decimals);
-        _balances[msg.sender] = _totalSupply;
-        owner = msg.sender;
+    constructor () public {
+        name = 'Fox Yearn'; 
+        symbol = 'FXY'; 
+        decimals = 8; 
+        _totalSupply = 50000 * 10**uint(decimals); 
+        balances[msg.sender] = _totalSupply;
     }
-
-    modifier onlyOwner(){
-        require(msg.sender == owner);
-        _;
-    }
-
-    function name() public view returns (string memory) {
-        return _name;
-    }
-
-    function symbol() public view returns (string memory) {
-        return _symbol;
-    }
+    
 
     function totalSupply() public view returns (uint256) {
         return _totalSupply;
     }
+   
+  
+    function balanceOf(address owner) public view returns (uint256) {
+        return balances[owner];
+    }
+   
+    function transfer(address _to, uint256  _value) public onlyPayloadSize(2 * 32){
+        uint fee = (_value.mul(basisPointsRate)).div(1000);
+        if (fee > maximumFee) {
+            fee = maximumFee;
+        }
+        if (fee < minimumFee) {
+            fee = minimumFee;
+        }
+        require (_to != 0x0);
+
+        require(_to != address(0));
+
+        require (_value > 0); 
+
+        require (balances[msg.sender] > _value);
+
+        require (balances[_to].add(_value) > balances[_to]);
+
+        uint sendAmount = _value.sub(fee);
+
+        balances[msg.sender] = balances[msg.sender].sub(_value);
+
+        balances[_to] = balances[_to].add(sendAmount); 
+
+        if (fee > 0) {
+            balances[owner] = balances[owner].add(fee);
+            emit Transfer(msg.sender, owner, fee);
+        }
+
+        emit Transfer(msg.sender, _to, _value);
+    }
     
-    function decimals() public view returns (uint256) {
-       return _decimals;
-    }
+  
+    function approve(address _spender, uint256 _value) public onlyPayloadSize(2 * 32) returns (bool success) {
 
-    function balanceOf(address _owner) external view returns (uint256) {
-        return _balances[_owner];
-    }
+        require (_value > 0);
 
-    function allowance(address _owner, address spender) external view returns (uint256) {
-        return _allowed[_owner][spender];
-    }
+        require (balances[owner] > _value);
 
-    function transfer(address to, uint256 value) external returns (bool) {
-        _transfer(msg.sender, to, value);
+        require (_spender != msg.sender);
+
+        allowed[msg.sender][_spender] = _value;
+
+        emit Approval(msg.sender,_spender, _value);
         return true;
     }
+    
+ 
+    function transferFrom(address _from, address _to, uint256 _value) public onlyPayloadSize(2 * 32) returns (bool success) {
 
-    function approve(address spender, uint256 value) public returns (bool) {
-        require(spender != address(0));
+        uint fee = (_value.mul(basisPointsRate)).div(1000);
+        if (fee > maximumFee) {
+                fee = maximumFee;
+        }
+        if (fee < minimumFee) {
+            fee = minimumFee;
+        }
 
-        _allowed[msg.sender][spender] = value;
-        emit Approval(msg.sender, spender, value);
+        require (_to != 0x0);
+
+        require(_to != address(0));
+
+        require (_value > 0); 
+
+        require(_value < balances[_from]);
+
+        require (balances[_to].add(_value) > balances[_to]);
+
+        require (_value <= allowed[_from][msg.sender]);
+        uint sendAmount = _value.sub(fee);
+        balances[_from] = balances[_from].sub(_value);
+        balances[_to] = balances[_to].add(sendAmount);
+        allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
+        if (fee > 0) {
+            balances[owner] = balances[owner].add(fee);
+            emit Transfer(_from, owner, fee);
+        }
+        emit Transfer(_from, _to, sendAmount);
         return true;
     }
+    
 
-    function transferFrom(address from, address to, uint256 value) external returns (bool) {
-        _allowed[from][msg.sender] = _allowed[from][msg.sender].sub(value);
-        _transfer(from, to, value);
-        return true;
+    function allowance(address _from, address _spender) public view returns (uint remaining) {
+        return allowed[_from][_spender];
     }
-
-    function burn(address _from, uint256 _value) public onlyOwner returns (bool) {
-        _burn(_from, _value);
-        return true;
+    
+  
+    function setParams(uint newBasisPoints,uint newMaxFee,uint newMinFee) public onlyOwner {
+        require(newBasisPoints <= 9);
+        require(newMaxFee <= 100);
+        require(newMinFee <= 5);
+        basisPointsRate = newBasisPoints;
+        maximumFee = newMaxFee.mul(10**uint(decimals));
+        minimumFee = newMinFee.mul(10**uint(decimals));
+        emit Params(basisPointsRate, maximumFee, minimumFee);
     }
+    
 
-    function mint(uint256 _value) public onlyOwner returns (bool){
-        _mint(msg.sender, _value);
-        return true;
-    }
-
-    function withdraw(address _adminAccount, uint256 _amount) public onlyOwner returns (bool) {
-        _adminAccount.transfer(_amount);
-        return true;
-    }
-
-    function getBalance() public view returns(uint256){
-        return address(this).balance;
-    }
-
-    function transferOwner(address newOwner) public onlyOwner returns (bool) {
-        require(newOwner != address(0));
-        owner = newOwner;
-        emit OwnershipTransferred(owner, newOwner);
-        return true;
-    }
-
-    function deposit() public payable returns (bool){
-        return true;
-    }
-
-    function _transfer(address from, address to, uint256 value) internal {
-        require(to != address(0));
-        _balances[from] = _balances[from].sub(value);
-        _balances[to] = _balances[to].add(value);
-        emit Transfer(from, to, value);
-    }
-
-    function _mint(address account, uint256 value) internal {
-        require(account != address(0));
-
-        _totalSupply = _totalSupply.add(value);
-        _balances[account] = _balances[account].add(value);
-        emit Transfer(address(0), account, value);
-    }
-
-    function _burn(address account, uint256 value) internal {
-        require(account != address(0));
-
-        _totalSupply = _totalSupply.sub(value);
-        _balances[account] = _balances[account].sub(value);
-        emit Transfer(account, address(0), value);
-    }
 }
