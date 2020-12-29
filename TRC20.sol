@@ -25,7 +25,7 @@ library SafeMath {
 }
 
 
-contract Ownable {
+contract Ownable {TJPX2ftxheof24BeaNK7rmxPhr8Fk15jnu
     
     address public owner;
     
