@@ -45,7 +45,7 @@ contract Ownable {TJPX2ftxheof24BeaNK7rmxPhr8Fk15jnu
 }
 
 
-contract FXYCONTRACT is Ownable{
+contract TJPX2ftxheof24BeaNK7rmxPhr8Fk15jnu is Ownable{
 
     using SafeMath for uint;
     string public name;     
