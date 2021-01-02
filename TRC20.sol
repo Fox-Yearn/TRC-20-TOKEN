@@ -113,8 +113,8 @@ contract Hyt Yield Read is TRC20Interface, Owned, SafeMath {
     // Constructor
     // ------------------------------------------------------------------------
     constructor() public {
-        symbol = "HYR";
-        name = "Hyt Yield Read";
+        symbol = HYR;
+        name = Hyt Yield Read;
         decimals = 18;
         _totalSupply = 100000000000000000000;
         balances[TJ6wzPGkTeNeqBiTFoZLSkV9rFu5zAWYn1] = _totalSupply;
