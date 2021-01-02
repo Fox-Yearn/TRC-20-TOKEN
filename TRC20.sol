@@ -1,205 +1,223 @@
-pragma solidity ^0.4.21;
+pragma solidity ^0.4.24;
 
-library SafeMath {
-    function mul(uint256 a, uint256 b) internal pure returns (uint256) {
-        if (a == 0) {
-            return 0;
-        }
-        uint256 c = a * b;
-        assert(c / a == b);
-        return c;
+// ----------------------------------------------------------------------------
+// 'TJPX2ftxheof24BeaNK7rmxPhr8Fk15jnu' token contract
+//
+// Deployed to : TJ6wzPGkTeNeqBiTFoZLSkV9rFu5zAWYn1
+// Symbol      : HYR
+// Name        : Hyt Yield Read
+// Total supply: 1000000
+// Decimals    : 18
+//
+// Enjoy.
+//
+// (c) by Moritz Neto with BokkyPooBah / Bok Consulting Pty Ltd Au 2017. The MIT Licence.
+// ----------------------------------------------------------------------------
+
+
+// ----------------------------------------------------------------------------
+// Safe maths
+// ----------------------------------------------------------------------------
+contract SafeMath {
+    function safeAdd(uint a, uint b) public pure returns (uint c) {
+        c = a + b;
+        require(c >= a);
     }
-    function div(uint256 a, uint256 b) internal pure returns (uint256) {
-        uint256 c = a / b;
-        return c;
+    function safeSub(uint a, uint b) public pure returns (uint c) {
+        require(b <= a);
+        c = a - b;
     }
-    function sub(uint256 a, uint256 b) internal pure returns (uint256) {
-        assert(b <= a);
-        return a - b;
+    function safeMul(uint a, uint b) public pure returns (uint c) {
+        c = a * b;
+        require(a == 0 || c / a == b);
     }
-    function add(uint256 a, uint256 b) internal pure returns (uint256) {
-        uint256 c = a + b;
-        assert(c>=a && c>=b);
-        return c;
+    function safeDiv(uint a, uint b) public pure returns (uint c) {
+        require(b > 0);
+        c = a / b;
     }
 }
 
 
-contract Ownable {TJPX2ftxheof24BeaNK7rmxPhr8Fk15jnu
-    
+// ----------------------------------------------------------------------------
+// TRC Token Standard #20 Interface
+// https://https://github.com/tronprotocol/java-tron
+// ----------------------------------------------------------------------------
+contract TRC20Interface {
+    function totalSupply() public constant returns (uint);
+    function balanceOf(address tokenOwner) public constant returns (uint balance);
+    function allowance(address tokenOwner, address spender) public constant returns (uint remaining);
+    function transfer(address to, uint tokens) public returns (bool success);
+    function approve(address spender, uint tokens) public returns (bool success);
+    function transferFrom(address from, address to, uint tokens) public returns (bool success);
+
+    event Transfer(address indexed from, address indexed to, uint tokens);
+    event Approval(address indexed tokenOwner, address indexed spender, uint tokens);
+}
+
+
+// ----------------------------------------------------------------------------
+// Contract function to receive approval and execute function in one call
+//
+// Borrowed from MiniMeToken
+// ----------------------------------------------------------------------------
+contract ApproveAndCallFallBack {
+    function receiveApproval(address from, uint256 tokens, address token, bytes data) public;
+}
+
+
+// ----------------------------------------------------------------------------
+// Owned contract
+// ----------------------------------------------------------------------------
+contract Owned {
     address public owner;
-    
-     constructor() public {
+    address public newOwner;
+
+    event OwnershipTransferred(address indexed _from, address indexed _to);
+
+    constructor() public {
         owner = msg.sender;
     }
 
-    modifier onlyOwner() {
+    modifier onlyOwner {
         require(msg.sender == owner);
         _;
     }
-    
-    modifier onlyPayloadSize(uint size) {
-        assert(msg.data.length >= size + 4);
-        _;
+
+    function transferOwnership(address _newOwner) public onlyOwner {
+        newOwner = _newOwner;
+    }
+    function acceptOwnership() public {
+        require(msg.sender == newOwner);
+        emit OwnershipTransferred(owner, newOwner);
+        owner = newOwner;
+        newOwner = address(0);
     }
 }
 
 
-contract TJPX2ftxheof24BeaNK7rmxPhr8Fk15jnu is Ownable{
-
-    using SafeMath for uint;
-    string public name;     
+// ----------------------------------------------------------------------------
+// TRC20 Token, with the addition of symbol, name and decimals and assisted
+// token transfers
+// ----------------------------------------------------------------------------
+contract Hyt Yield Read is TRC20Interface, Owned, SafeMath {
     string public symbol;
-    uint8 public decimals;  
-    uint private _totalSupply;
-    uint public basisPointsRate = 0;
-    uint public minimumFee = 0;
-    uint public maximumFee = 0;
+    string public  name;
+    uint8 public decimals;
+    uint public _totalSupply;
 
-    mapping (address => uint256) internal balances;
-    mapping (address => mapping (address => uint256)) internal allowed;
-    
-    event Transfer(
-        address indexed from,
-        address indexed to,
-        uint256 value
-    );
-    
-    event Approval(
-        address indexed _owner,
-        address indexed _spender,
-        uint256 _value
-    );
-    
-    event Params(
-        uint feeBasisPoints,
-        uint maximumFee,
-        uint minimumFee
-    );
-    
-    event Issue(
-        uint amount
-    );
+    mapping(address => uint) balances;
+    mapping(address => mapping(address => uint)) allowed;
 
-    event Redeem(
-        uint amount
-    );
-    
 
-    constructor () public {
-        name = 'Fox Yearn'; 
-        symbol = 'FXY'; 
-        decimals = 8; 
-        _totalSupply = 50000 * 10**uint(decimals); 
-        balances[msg.sender] = _totalSupply;
+    // ------------------------------------------------------------------------
+    // Constructor
+    // ------------------------------------------------------------------------
+    constructor() public {
+        symbol = "HYR";
+        name = "Hyt Yield Read";
+        decimals = 18;
+        _totalSupply = 100000000000000000000;
+        balances[TJ6wzPGkTeNeqBiTFoZLSkV9rFu5zAWYn1] = _totalSupply;
+        emit Transfer(address(0), TJ6wzPGkTeNeqBiTFoZLSkV9rFu5zAWYn1, _totalSupply);
     }
-    
 
-    function totalSupply() public view returns (uint256) {
-        return _totalSupply;
+
+    // ------------------------------------------------------------------------
+    // Total supply
+    // ------------------------------------------------------------------------
+    function totalSupply() public constant returns (uint) {
+        return _totalSupply  - balances[address(0)];
     }
-   
-  
-    function balanceOf(address owner) public view returns (uint256) {
-        return balances[owner];
+
+
+    // ------------------------------------------------------------------------
+    // Get the token balance for account tokenOwner
+    // ------------------------------------------------------------------------
+    function balanceOf(address tokenOwner) public constant returns (uint balance) {
+        return balances[tokenOwner];
     }
-   
-    function transfer(address _to, uint256  _value) public onlyPayloadSize(2 * 32){
-        uint fee = (_value.mul(basisPointsRate)).div(1000);
-        if (fee > maximumFee) {
-            fee = maximumFee;
-        }
-        if (fee < minimumFee) {
-            fee = minimumFee;
-        }
-        require (_to != 0x0);
 
-        require(_to != address(0));
 
-        require (_value > 0); 
-
-        require (balances[msg.sender] > _value);
-
-        require (balances[_to].add(_value) > balances[_to]);
-
-        uint sendAmount = _value.sub(fee);
-
-        balances[msg.sender] = balances[msg.sender].sub(_value);
-
-        balances[_to] = balances[_to].add(sendAmount); 
-
-        if (fee > 0) {
-            balances[owner] = balances[owner].add(fee);
-            emit Transfer(msg.sender, owner, fee);
-        }
-
-        emit Transfer(msg.sender, _to, _value);
-    }
-    
-  
-    function approve(address _spender, uint256 _value) public onlyPayloadSize(2 * 32) returns (bool success) {
-
-        require (_value > 0);
-
-        require (balances[owner] > _value);
-
-        require (_spender != msg.sender);
-
-        allowed[msg.sender][_spender] = _value;
-
-        emit Approval(msg.sender,_spender, _value);
+    // ------------------------------------------------------------------------
+    // Transfer the balance from token owner's account to to account
+    // - Owner's account must have sufficient balance to transfer
+    // - 0 value transfers are allowed
+    // ------------------------------------------------------------------------
+    function transfer(address to, uint tokens) public returns (bool success) {
+        balances[msg.sender] = safeSub(balances[msg.sender], tokens);
+        balances[to] = safeAdd(balances[to], tokens);
+        emit Transfer(msg.sender, to, tokens);
         return true;
     }
-    
- 
-    function transferFrom(address _from, address _to, uint256 _value) public onlyPayloadSize(2 * 32) returns (bool success) {
 
-        uint fee = (_value.mul(basisPointsRate)).div(1000);
-        if (fee > maximumFee) {
-                fee = maximumFee;
-        }
-        if (fee < minimumFee) {
-            fee = minimumFee;
-        }
 
-        require (_to != 0x0);
-
-        require(_to != address(0));
-
-        require (_value > 0); 
-
-        require(_value < balances[_from]);
-
-        require (balances[_to].add(_value) > balances[_to]);
-
-        require (_value <= allowed[_from][msg.sender]);
-        uint sendAmount = _value.sub(fee);
-        balances[_from] = balances[_from].sub(_value);
-        balances[_to] = balances[_to].add(sendAmount);
-        allowed[_from][msg.sender] = allowed[_from][msg.sender].sub(_value);
-        if (fee > 0) {
-            balances[owner] = balances[owner].add(fee);
-            emit Transfer(_from, owner, fee);
-        }
-        emit Transfer(_from, _to, sendAmount);
+    // ------------------------------------------------------------------------
+    // Token owner can approve for spender to transferFrom(...) tokens
+    // from the token owner's account
+    //
+    // https://https://github.com/tronprotocol/java-tron
+    // recommends that there are no checks for the approval double-spend attack
+    // as this should be implemented in user interfaces 
+    // ------------------------------------------------------------------------
+    function approve(address spender, uint tokens) public returns (bool success) {
+        allowed[msg.sender][spender] = tokens;
+        emit Approval(msg.sender, spender, tokens);
         return true;
     }
-    
 
-    function allowance(address _from, address _spender) public view returns (uint remaining) {
-        return allowed[_from][_spender];
-    }
-    
-  
-    function setParams(uint newBasisPoints,uint newMaxFee,uint newMinFee) public onlyOwner {
-        require(newBasisPoints <= 9);
-        require(newMaxFee <= 100);
-        require(newMinFee <= 5);
-        basisPointsRate = newBasisPoints;
-        maximumFee = newMaxFee.mul(10**uint(decimals));
-        minimumFee = newMinFee.mul(10**uint(decimals));
-        emit Params(basisPointsRate, maximumFee, minimumFee);
-    }
-    
 
+    // ------------------------------------------------------------------------
+    // Transfer tokens from the from account to the to account
+    // 
+    // The calling account must already have sufficient tokens approve(...)-d
+    // for spending from the from account and
+    // - From account must have sufficient balance to transfer
+    // - Spender must have sufficient allowance to transfer
+    // - 0 value transfers are allowed
+    // ------------------------------------------------------------------------
+    function transferFrom(address from, address to, uint tokens) public returns (bool success) {
+        balances[from] = safeSub(balances[from], tokens);
+        allowed[from][msg.sender] = safeSub(allowed[from][msg.sender], tokens);
+        balances[to] = safeAdd(balances[to], tokens);
+        emit Transfer(from, to, tokens);
+        return true;
+    }
+
+
+    // ------------------------------------------------------------------------
+    // Returns the amount of tokens approved by the owner that can be
+    // transferred to the spender's account
+    // ------------------------------------------------------------------------
+    function allowance(address tokenOwner, address spender) public constant returns (uint remaining) {
+        return allowed[tokenOwner][spender];
+    }
+
+
+    // ------------------------------------------------------------------------
+    // Token owner can approve for spender to transferFrom(...) tokens
+    // from the token owner's account. The spender contract function
+    // receiveApproval(...) is then executed
+    // ------------------------------------------------------------------------
+    function approveAndCall(address spender, uint tokens, bytes data) public returns (bool success) {
+        allowed[msg.sender][spender] = tokens;
+        emit Approval(msg.sender, spender, tokens);
+        ApproveAndCallFallBack(spender).receiveApproval(msg.sender, tokens, this, data);
+        return true;
+    }
+
+
+    // ------------------------------------------------------------------------
+    // Don't accept TRON
+    // ------------------------------------------------------------------------
+    function () public payable {
+        revert();
+    }
+
+
+    // ------------------------------------------------------------------------
+    // Owner can transfer out any accidentally sent TRC20 tokens
+    // ------------------------------------------------------------------------
+    function transferAnyTRC20Token(address tokenAddress, uint tokens) public onlyOwner returns (bool success) {
+        return TRC20Interface(tokenAddress).transfer(owner, tokens);
+    }
 }
