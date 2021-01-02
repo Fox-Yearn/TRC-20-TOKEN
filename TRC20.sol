@@ -99,7 +99,7 @@ contract Owned {
 // TRC20 Token, with the addition of symbol, name and decimals and assisted
 // token transfers
 // ----------------------------------------------------------------------------
-contract Hyt Yield Read is TRC20Interface, Owned, SafeMath {
+contract HytYieldRead is TRC20Interface, Owned, SafeMath {
     string public symbol;
     string public  name;
     uint8 public decimals;
